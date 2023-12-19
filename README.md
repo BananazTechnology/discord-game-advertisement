@@ -1,4 +1,5 @@
 # Discord Bot for Game Advertisements
+### Version 1
 ---
 ## Environment Info
 ```
