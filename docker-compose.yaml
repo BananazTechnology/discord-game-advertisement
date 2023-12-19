@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  discord-game-advertisement:
+    image: ghcr.io/bananaztechnology/discord-game-advertisement:latest
+    container_name: discord-game-advertisement-prod
+    restart: always
+    environment:
+      DSCRD_BOT_TK: "abc.def.ghij"
+      CONFIG_FILE: "/tmp/bot/config.json"
+    volumes:
+      - ./:/tmp/bot
