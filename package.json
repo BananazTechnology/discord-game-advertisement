@@ -1,6 +1,6 @@
 {
   "name": "discord-game-advertisement",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Discord Message Advertisement bot",
   "main": "src/bot.ts",
   "scripts": {
