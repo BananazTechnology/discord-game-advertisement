@@ -15,14 +15,27 @@ export class Output {
     this.sender = sender;
     this.cronJob = new CronJob(
       config.getCron(), 
-      this.compileAndSend, 
+      this.run, 
       undefined, 
       undefined, 
       "UTC", 
-      this
+      this,
+      true
     );
     this.cronJob.start()
     console.log(`Starting new Output for ${config.getChannelId()} on interval ${config.getCron()}`);
+  }
+
+  private async run() {
+    // Check most recent message ID
+    let newestMessageId = await this.sender.getMostRecentMessageId(this.config.getChannelId());
+    if(newestMessageId !== this.config.getLastMessageId() && this.config.getLastMessageId() !== "") {
+      // If our message is not most recent, delete it and reset our local ID to be ""
+      await this.sender.deleteMessage(this.config.getChannelId(), this.config.getLastMessageId());
+      this.config.setLastMessageId("");
+    }
+    // Run compileAndSend
+    await this.compileAndSend();
   }
 
   private async compileAndSend() {

@@ -53,7 +53,7 @@ fs.readFile(configFile, 'utf8', (err, data) => {
       config.setNotes(element.notes);
 
       // Set cron or default
-      let resolveCron = element.cronRegex ? element.cronRegex : "*/30 * * * * *";
+      let resolveCron = element.cronRegex ? element.cronRegex : "*/5 * * * * *";
       config.setCron(resolveCron);
 
       // Log we received the config
