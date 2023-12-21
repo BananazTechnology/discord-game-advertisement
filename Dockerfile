@@ -1,6 +1,15 @@
-FROM node
+FROM node:16
+
+# Security patches
+RUN apt-get update && apt-get upgrade -y
+
+# Setup working files
 COPY . /usr/local/bananaztech
 WORKDIR /usr/local/bananaztech
-STOPSIGNAL SIGTERM
+
+# Run node setup
+RUN npm install -g ts-node
 RUN npm i
-CMD ["npm", "run", "start"]
+
+# Run container
+CMD ["ts-node", "src/bot.ts"]

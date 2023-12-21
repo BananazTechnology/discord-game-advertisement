@@ -19,8 +19,7 @@ export class Output {
       undefined, 
       undefined, 
       "UTC", 
-      this,
-      true
+      this
     );
     this.cronJob.start()
     console.log(`Starting new Output for ${config.getChannelId()} on interval ${config.getCron()}`);
@@ -41,7 +40,6 @@ export class Output {
   private async compileAndSend() {
     let newMessage = await this.buildMessage();
     if(this.config.getLastMessageId() === "") {
-
       let newMessageId = await this.sender.sendEmbeds(this.config.getChannelId(), [newMessage]);
       if(newMessageId) this.config.setLastMessageId(newMessageId);
       console.log(`New message ${this.config.getLastMessageId()} sent to ${this.config.getChannelId()} at ${new Date()}`);
