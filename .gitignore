@@ -7,4 +7,5 @@ build/*
 
 # Project
 *.env
-config.json
+config**.json
+docker-compose.yaml
