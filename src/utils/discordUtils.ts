@@ -9,7 +9,12 @@ export class DiscordUtils {
     this.discord = discord;
   }
 
-  public async getMostRecentMessageId(channelId : string) {
+  public async getBotUser() {
+    if (!this.discord.readyAt) return null;
+    return this.discord.user;
+  }
+
+  public async getMostRecentMessage(channelId : string) {
     if (!this.discord.readyAt) return null;
     const channel = await this.discord.channels.fetch(channelId);
     // Using a type guard to narrow down the correct type
@@ -19,7 +24,7 @@ export class DiscordUtils {
     // Get the first message in the collection
     const firstMessage = messages.first();
     // Return the ID of the first message, or null if there are no messages
-    return firstMessage ? firstMessage.id : null;
+    return firstMessage ? firstMessage : null
   }
 
   public async sendEmbeds(channelId : string, embeds : (MessageEmbed | MessageEmbedOptions)[]) {

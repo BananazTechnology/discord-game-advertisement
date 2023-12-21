@@ -26,30 +26,49 @@ export class Output {
   }
 
   private async run() {
+    // Setup variables
+    let conf = this.config;
+    let send = this.sender;
     // Check most recent message ID
-    let newestMessageId = await this.sender.getMostRecentMessageId(this.config.getChannelId());
-    if(newestMessageId !== this.config.getLastMessageId() && this.config.getLastMessageId() !== "") {
-      // If our message is not most recent, delete it and reset our local ID to be ""
-      await this.sender.deleteMessage(this.config.getChannelId(), this.config.getLastMessageId());
-      this.config.setLastMessageId("");
+    let newestMessage = await send.getMostRecentMessage(conf.getChannelId());
+    let botUser = await send.getBotUser();
+    // Ensure values are set
+    if(newestMessage && botUser) {
+      // Our bot message is only deleted and refreshed if: 
+      // Remember we want our bot to always float to the bottom so if its not the bottom we must destroy our message and resend
+      // ((Last message id is not our bots message) && (our bot has send a message) && (we didnt write the last message))
+          // We want our message to be on the bottom so if the last message id is not ours we need to refresh
+          // We must ensure we dont try to delete a message we know we didnt send, so we check if we have sent a message
+          // We must ensure we dont delete our own message, so we check if the last message was sent by us (added to support multiple bots)
+      if((newestMessage.id !== conf.getLastMessageId()) && (conf.getLastMessageId() !== "") && (newestMessage.author.id !== botUser.id)) {
+        // If our message is not most recent, delete it and reset our local ID to be ""
+        await send.deleteMessage(conf.getChannelId(), conf.getLastMessageId());
+        conf.setLastMessageId("");
+      }
     }
     // Run compileAndSend
     await this.compileAndSend();
   }
 
   private async compileAndSend() {
+    // Setup variables
+    let conf = this.config;
+    let send = this.sender;
     let newMessage = await this.buildMessage();
-    if(this.config.getLastMessageId() === "") {
-      let newMessageId = await this.sender.sendEmbeds(this.config.getChannelId(), [newMessage]);
-      if(newMessageId) this.config.setLastMessageId(newMessageId);
-      console.log(`New message ${this.config.getLastMessageId()} sent to ${this.config.getChannelId()} at ${new Date()}`);
-    } else {
-      await this.sender.updateMessage(this.config.getChannelId(), this.config.getLastMessageId(), [newMessage]);
-      console.log(`Update for ${this.config.getLastMessageId()} sent to ${this.config.getChannelId()} at ${new Date()}`);
+    // Check if we have sent a message or if this first start
+    if(conf.getLastMessageId() === "") {
+      let newMessageId = await send.sendEmbeds(conf.getChannelId(), [newMessage]);
+      if(newMessageId) conf.setLastMessageId(newMessageId);
+      console.log(`New message ${conf.getLastMessageId()} sent to ${conf.getChannelId()} at ${new Date()}`);
+    } else { // Block runs on message updates
+      await send.updateMessage(conf.getChannelId(), conf.getLastMessageId(), [newMessage]);
+      console.log(`Update for ${conf.getLastMessageId()} sent to ${conf.getChannelId()} at ${new Date()}`);
     }
   }
 
   private async buildMessage() {
+    // Setup variables
+    let conf = this.config;
     let gameServer = new GameUtils();
 
     // Setup default fields / scaffold message
@@ -58,28 +77,28 @@ export class Output {
       .setTimestamp();
 
     // Setup title
-    returnEmbed.setTitle(`${this.config.getMode().charAt(0).toUpperCase() + this.config.getMode().slice(1)} Server Info`);
+    returnEmbed.setTitle(`${conf.getMode().charAt(0).toUpperCase() + conf.getMode().slice(1)} Server Info`);
 
     // Setup image if provided
-    if(this.config.getImage() !== "") returnEmbed.setThumbnail(this.config.getImage());
+    if(conf.getImage() !== "") returnEmbed.setThumbnail(conf.getImage());
 
     // Setup default embed content
-    let gameInfoField = `**Server:** \`${this.config.getGameServerHostname()}\`\n`;
+    let gameInfoField = `**Server:** \`${conf.getGameServerHostname()}\`\n`;
 
     // Fetch gamedig data for the server
     try {
       // Fetch data
-      let data = await gameServer.getQuery(this.config.getMode(), this.config.getGameServerHostname());
+      let data = await gameServer.getQuery(conf.getMode(), conf.getGameServerHostname(), conf.getGameServerPort());
       // Populate fields in message for data
       gameInfoField += `**Status:** \u200B\u200B\u200B` + `:green_circle:\n`;
       gameInfoField += `**Players:** ${data.players.length}/${data.maxplayers}\n`;
       gameInfoField += `**Ping:** ${data.ping}\n`;
-      if(this.config.getNotes() !== "") gameInfoField += `\n**Notes:** ${this.config.getNotes()}\n`;
+      if(conf.getNotes() !== "") gameInfoField += `\n**Notes:** ${conf.getNotes()}\n`;
     } catch (error) {
       // Populate fields in message for data
       gameInfoField += `**Status:** :red_circle:\n`;
       // Log error
-      console.error(`Host ${this.config.getGameServerHostname()} is not responding to queries for ${this.config.getMode()} in channel ${this.config.getChannelId()}`);
+      console.error(`Host ${conf.getGameServerHostname()} is not responding to queries for ${conf.getMode()} in channel ${conf.getChannelId()}`);
     }
 
     // Build embed for discord with the data

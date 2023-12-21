@@ -1,11 +1,13 @@
 import GameDig from 'gamedig';
 
 export class GameUtils {
-  public async getQuery(game: string, host: string) {
+  public async getQuery(game: string, host: string, port?: number) {
     try {
       const queryOptions = {
         type: game as GameDig.Type,
-        host: host
+        host: host,
+        port: port,
+        maxAttempts: 1
       };
 
       const result = await GameDig.query(queryOptions);

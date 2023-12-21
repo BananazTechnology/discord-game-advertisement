@@ -47,6 +47,7 @@ fs.readFile(configFile, 'utf8', (err, data) => {
       // Build JSON element into Config object
       let config : Config = new Config();
       config.setGameServerHostname(element.host);
+      config.setGameServerPort(element.port ? element.port : undefined);
       config.setChannelId(element.channelId);
       config.setMode(element.mode);
       config.setImage(element.image);

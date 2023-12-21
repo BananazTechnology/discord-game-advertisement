@@ -2,6 +2,7 @@ export class Config {
   // User attributes. Should always be private as updating information will need to be reflected in the db
   private cronRegex?: string;
   private gameServerHostname?: string;
+  private gameServerPort?: number;
   private channelId?: string;
   private mode?: string;
   private image?: string;
@@ -22,6 +23,10 @@ export class Config {
 
   public getGameServerHostname () : string {
     return this.gameServerHostname ? this.gameServerHostname : "";
+  }
+
+  public getGameServerPort () : number {
+    return this.gameServerPort ? this.gameServerPort : 0;
   }
 
   public getChannelId () : string {
@@ -51,6 +56,10 @@ export class Config {
 
   public setGameServerHostname (gameServerHostname: string) {
     this.gameServerHostname = gameServerHostname;
+  }
+
+  public setGameServerPort (gameServerPort: number) {
+    this.gameServerPort = gameServerPort;
   }
 
   public setChannelId (channelId: string) {
