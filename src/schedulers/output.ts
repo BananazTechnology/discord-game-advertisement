@@ -9,6 +9,7 @@ export class Output {
   private config : Config;
   private sender : DiscordUtils;
   private cronJob: CronJob;
+  private checkForForgottenMsgs : boolean = false;
 
   public constructor (config : Config, sender : DiscordUtils) {
     this.config = config;
@@ -26,6 +27,39 @@ export class Output {
   }
 
   private async run() {
+    if(!this.checkForForgottenMsgs) {
+      await this.discordCleanupForgottenMessages();
+      this.checkForForgottenMsgs = true;
+    }
+    await this.discordRefreshMessageLogic();
+    await this.discordAdMessageLogic();
+  }
+
+  // This function catches undeleted messages in the channel cleans them up
+  private async discordCleanupForgottenMessages() {
+    console.log(`Checking for forgotten messages in ${this.config.getChannelId()}`);
+    // Setup variables
+    let conf = this.config;
+    let send = this.sender;
+    // Get last 25 messages
+    let messages = await send.getMessages(conf.getChannelId(), 25);
+    // If any messages are from our bot, delete them
+    let ourBot = await send.getBotUser();
+    let count = 0;
+    if (messages && ourBot) {
+      for (const message of messages.values()) {
+        console.log(`Checking message ${JSON.stringify(message)}`);
+        if (message.author.id === ourBot.id) {
+          await send.deleteMessage(conf.getChannelId(), message.id);
+          count++;
+        }
+      }
+    }    
+    console.log(`Deleted ${count} forgotten messages in ${this.config.getChannelId()}`);
+  }
+
+  // This function ensures our bot message is always at the bottom of the channel
+  private async discordRefreshMessageLogic() {
     // Setup variables
     let conf = this.config;
     let send = this.sender;
@@ -46,27 +80,28 @@ export class Output {
         conf.setLastMessageId("");
       }
     }
-    // Run compileAndSend
-    await this.compileAndSend();
   }
 
-  private async compileAndSend() {
+  // Simple function to send the Ad message or update it
+  private async discordAdMessageLogic() {
     // Setup variables
     let conf = this.config;
     let send = this.sender;
-    let newMessage = await this.buildMessage();
+    let newMessage = await this.buildDiscordEmbed();
     // Check if we have sent a message or if this first start
     if(conf.getLastMessageId() === "") {
       let newMessageId = await send.sendEmbeds(conf.getChannelId(), [newMessage]);
-      if(newMessageId) conf.setLastMessageId(newMessageId);
-      console.log(`New message ${conf.getLastMessageId()} sent to ${conf.getChannelId()} at ${new Date()}`);
+      if(newMessageId) {
+        conf.setLastMessageId(newMessageId);
+        console.log(`New message ${conf.getLastMessageId()} sent to ${conf.getChannelId()} at ${new Date()}`);
+      }
     } else { // Block runs on message updates
       await send.updateMessage(conf.getChannelId(), conf.getLastMessageId(), [newMessage]);
       console.log(`Update for ${conf.getLastMessageId()} sent to ${conf.getChannelId()} at ${new Date()}`);
     }
   }
 
-  private async buildMessage() {
+  private async buildDiscordEmbed() {
     // Setup variables
     let conf = this.config;
     let gameServer = new GameUtils();

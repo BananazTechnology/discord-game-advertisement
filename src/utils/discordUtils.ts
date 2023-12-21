@@ -14,6 +14,17 @@ export class DiscordUtils {
     return this.discord.user;
   }
 
+  public async getMessages(channelId : string, count : number) {
+    if (!this.discord.readyAt) return null;
+    const channel = await this.discord.channels.fetch(channelId);
+    // Using a type guard to narrow down the correct type
+    if (!((channel): channel is TextChannel => channel?.type === 'GUILD_TEXT')(channel)) return null;
+    // Fetch the most recent message
+    const messages = await channel.messages.fetch({ limit: count });
+    // Return the ID of the first message, or null if there are no messages
+    return messages ? messages : null
+  }
+
   public async getMostRecentMessage(channelId : string) {
     if (!this.discord.readyAt) return null;
     const channel = await this.discord.channels.fetch(channelId);
